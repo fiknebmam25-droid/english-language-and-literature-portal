@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f2942" />
+  <title>English Language and Literature Portal</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root{--primary:#0f2942;--accent:#d97706;--bg:#f1f5f9;--surface:#fff;--muted:#64748b;--border:#cbd5e1}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:#1e293b}
+    header{background:linear-gradient(135deg,var(--primary),#1e4268);color:#fff;padding:16px;position:sticky;top:0}
+    header h1{font-size:1.1rem;margin:0} header p{font-size:.82rem;margin:4px 0 0;color:#dbeafe}
+    nav{display:flex;overflow:auto;background:#fff;border-bottom:1px solid var(--border)} nav button{white-space:nowrap;border:0;border-bottom:3px solid transparent;background:none;padding:12px 14px;color:var(--muted);font-weight:700} nav button.active{color:var(--primary);border-color:var(--accent)}
+    main{max-width:1100px;margin:auto;padding:18px}.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.bar h2{color:var(--primary);font-size:1.25rem}
+    button,.btn{border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:#fff}.outline{background:#fff;border:1px solid var(--border);color:var(--primary)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px}.card h3{margin:0 0 8px;color:var(--primary)}.card p{margin:5px 0;color:var(--muted)}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.toolbar input,.toolbar select{padding:9px;border:1px solid var(--border);border-radius:7px}.toolbar input{flex:1;min-width:180px}
+    .edit-only{display:none!important}body.edit-mode .edit-only{display:inline-block!important}.modal-bg{display:none;position:fixed;inset:0;background:#0f172acc;padding:15px;z-index:20}.modal-bg.open{display:flex;align-items:center;justify-content:center}.modal{background:#fff;width:min(600px,100%);max-height:90vh;overflow:auto;padding:18px;border-radius:12px}.field{margin:10px 0}.field label{display:block;font-weight:700;color:var(--primary);font-size:.85rem;margin-bottom:4px}.field input,.field textarea,.field select{width:100%;padding:9px;border:1px solid var(--border);border-radius:7px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  </style>
+</head>
+<body>
+<header><h1>Assosa University · Department of English Language &amp; Literature</h1><p>College of Social Science and Humanities · Academic &amp; Exit Exam Portal</p></header>
+<nav id="tabs"></nav>
+<main>
+  <div class="bar"><h2 id="title"></h2><button id="addBtn" class="primary edit-only">+ Add</button></div>
+  <div id="toolbar" class="toolbar"></div>
+  <div id="content" class="grid"></div>
+</main>
+<div class="modal-bg" id="modal">
+  <form class="modal" id="form"><h2 id="formTitle"></h2><div id="fields"></div><div class="actions"><button type="button" id="cancel" class="outline">Cancel</button><button class="primary" type="submit">Save</button></div></form>
+</div>
+<script>
+const courses=["Listening Skills","Spoken English II","Advanced Speech","Reading Skills","Sophomore English","Advanced Writing II","English Grammar in Use","Introduction to Language & Linguistics","Translation and Interpretation","Discourse Analysis","Fundamentals of Literature","Literary Theory and Criticism","Editing and Proofreading","Public Relations","Fundamentals of Research and Report Writing"];
+const sectionDefs={
+ department:{title:"Department Information",fields:["title","details"]},classes:{title:"Classes: 2nd–4th Year",fields:["year","title","details"]},instructors:{title:"Assigned Instructors",fields:["name","course","year","contact"]},common:{title:"Common Courses",fields:["title","year","instructor","details"]},tutorials:{title:"Tutorial Classes",fields:["course","year","schedule","instructor","details"]},training:{title:"Training Sessions",fields:["title","date","location","instructor","details"]},exam:{title:"Exit Exam Bank",fields:["course","type","year","question","options","answer","explanation"]},repository:{title:"Digital Repository",fields:["title","course","author","details"]},notices:{title:"Department Notices",fields:["title","date","details"]},schedule:{title:"Calendar & Timetables",fields:["day","time","course","room","instructor"]},forms:{title:"Forms, Grievance & Alumni",fields:["title","details"]}
+};
+const nav=[ ["department","Department"],["classes","Classes"],["instructors","Instructors"],["common","Common Courses"],["tutorials","Tutorials"],["training","Training"],["exam","Exit Exam"],["repository","Repository"],["notices","Notices"],["schedule","Timetable"],["forms","Forms"] ];
+const key="assosa-english-portal-v1";
+const initial={department:[{title:"About the Department",details:"Department of English Language and Literature, Assosa University."}],classes:[{year:"2nd Year",title:"Second Year",details:"Add modules and announcements here."},{year:"3rd Year",title:"Third Year",details:"Add modules and announcements here."},{year:"4th Year",title:"Fourth Year",details:"Add modules and announcements here."}],instructors:[],common:[],tutorials:[],training:[],exam:courses.map(course=>({course,type:"Mock / Previous Year",year:"",question:"",options:"",answer:"",explanation:""})),repository:[],notices:[],schedule:[],forms:[]};
+let data;try{data=JSON.parse(localStorage.getItem(key))||initial}catch(e){data=initial}let active="department",editing=-1;
+function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function save(){localStorage.setItem(key,JSON.stringify(data));render()}
+function start(){document.getElementById("tabs").innerHTML=nav.map(n=>`<button class="${n[0]==active?"active":""}" data-tab="${n[0]}">${n[1]}</button>`).join("");render()}
+function toolbar(){const el=document.getElementById("toolbar");if(active!=="exam")return el.innerHTML="";el.innerHTML=`<select id="courseFilter"><option value="">All 15 courses</option>${courses.map(c=>`<option>${esc(c)}</option>`).join("")}</select>`}
+function render(){const def=sectionDefs[active];document.getElementById("title").textContent=def.title;toolbar();let list=data[active]||[];const f=document.getElementById("courseFilter");if(f&&f.value)list=list.filter(x=>x.course===f.value);const box=document.getElementById("content");if(!list.length)return box.innerHTML="<p>No items yet.</p>";box.innerHTML=list.map((x,i)=>`<article class="card"><h3>${esc(x.title||x.name||x.course||"Item")}</h3>${Object.entries(x).filter(([k])=>k!=="title"&&k!=="name"&&k!=="course").map(([k,v])=>v?`<p><b>${esc(k)}:</b> ${esc(v)}</p>`:"" ).join("")}${Object.hasOwn(x,"course")&&active==="exam"?`<p><b>Course:</b> ${esc(x.course)}</p>`:""}<span class="edit-only"><button class="outline" data-edit="${i}">Edit</button> <button class="outline" data-delete="${i}">Delete</button></span></article>`).join("")}
+start();
+document.getElementById("tabs").onclick=e=>{const b=e.target.closest("[data-tab]");if(b){active=b.dataset.tab;start()}};
+document.getElementById("toolbar").onchange=render;
+document.getElementById("addBtn").onclick=()=>openForm();
+function openForm(i=-1){editing=i;const def=sectionDefs[active],item=i>=0?data[active][i]:{};document.getElementById("formTitle").textContent=i>=0?"Edit item":"Add item";document.getElementById("fields").innerHTML=def.fields.map(f=>{let value=item[f]||"";let label=f[0].toUpperCase()+f.slice(1);if(f==="course"&&active==="exam")return `<div class="field"><label>Course</label><select name="course" required>${courses.map(c=>`<option ${c===value?"selected":""}>${esc(c)}</option>`).join("")}</select></div>`;if(f==="year"&&active==="classes")return `<div class="field"><label>Academic year</label><select name="year"><option ${value==="2nd Year"?"selected":""}>2nd Year</option><option ${value==="3rd Year"?"selected":""}>3rd Year</option><option ${value==="4th Year"?"selected":""}>4th Year</option></select></div>`;if(["details","question","options","explanation"].includes(f))return `<div class="field"><label>${esc(label)}</label><textarea name="${f}" rows="3">${esc(value)}</textarea></div>`;return `<div class="field"><label>${esc(label)}</label><input name="${f}" value="${esc(value)}"></div>`}).join("");document.getElementById("modal").classList.add("open")}
+document.getElementById("cancel").onclick=()=>document.getElementById("modal").classList.remove("open");
+document.getElementById("form").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),r={};sectionDefs[active].fields.forEach(f=>r[f]=fd.get(f)||"");if(editing>=0)data[active][editing]=r;else data[active].unshift(r);document.getElementById("modal").classList.remove("open");save()};
+document.getElementById("content").onclick=e=>{const ed=e.target.closest("[data-edit]"),de=e.target.closest("[data-delete]");if(ed)openForm(+ed.dataset.edit);if(de&&confirm("Delete this item?")){data[active].splice(+de.dataset.delete,1);save()}};
+document.body.insertAdjacentHTML("beforeend","<button id=mode style='position:fixed;bottom:16px;left:16px;background:#d97706;color:#fff'>Enable Edit Mode</button>");document.getElementById("mode").onclick=e=>{document.body.classList.toggle("edit-mode");e.target.textContent=document.body.classList.contains("edit-mode")?"Disable Edit Mode":"Enable Edit Mode"};
+</script>
+</body>
+</html>

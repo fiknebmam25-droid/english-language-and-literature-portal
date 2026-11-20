@@ -1,0 +1,9 @@
+{
+  "name":"Assosa University English Portal",
+  "short_name":"English Portal",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f1f5f9",
+  "theme_color":"#0f2942"
+}
